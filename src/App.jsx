@@ -152,7 +152,10 @@ export default function App() {
   };
 
   const scrollToDemo = () => {
-    document.getElementById('demo-section').scrollIntoView({ behavior: 'smooth' });
+    const demoElement = document.getElementById('demo-section');
+    if (demoElement) {
+      demoElement.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
