@@ -89,6 +89,7 @@ export default function App() {
       });
       
       setBalances(prev => ({ ...prev, [address]: 0 }));
+      // THIS SETS THEM TO HIDDEN BY DEFAULT
       newVisibility[address] = false;
     }
     
@@ -152,10 +153,7 @@ export default function App() {
   };
 
   const scrollToDemo = () => {
-    const demoElement = document.getElementById('demo-section');
-    if (demoElement) {
-      demoElement.scrollIntoView({ behavior: 'smooth' });
-    }
+    document.getElementById('demo-section').scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
@@ -391,6 +389,8 @@ export default function App() {
                         onClick={() => toggleWalletKey(wallet.address)}
                         className="text-blue-600 hover:text-blue-800 text-xs font-medium flex items-center gap-1"
                       >
+                         {/* Added Eye Icon for clarity */}
+                        {showWalletKeys[wallet.address] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                         {showWalletKeys[wallet.address] ? 'Hide' : 'Reveal'}
                       </button>
                     </div>
