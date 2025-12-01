@@ -182,7 +182,7 @@ export default function App() {
               Launch Simulation <ArrowRight className="w-5 h-5" />
             </button>
             <a 
-              href="https://mikera1337-convex-testnet.hf.space/mcp" 
+              href="https://mikera1337-convex-testnet.hf.space/index.html" 
               target="_blank" 
               rel="noreferrer"
               className="bg-white/10 hover:bg-white/20 text-white font-medium py-4 px-8 rounded-xl transition-all border border-white/10 backdrop-blur-sm"
