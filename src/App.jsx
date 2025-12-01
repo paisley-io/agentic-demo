@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { BookOpen, Wallet, Key, Send, TrendingDown, Users, Lock, Eye, EyeOff, CheckCircle, ArrowRight, Activity, Globe } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { BookOpen, Wallet, Key, Send, TrendingDown, Users, Lock, Eye, EyeOff, CheckCircle, ArrowRight, Activity, Globe, ShoppingCart, Zap, Terminal, Sliders, Settings } from 'lucide-react';
 
 // --- Components ---
 
@@ -38,6 +38,20 @@ export default function App() {
   const [selectedWallet, setSelectedWallet] = useState('');
   const [showControllerKey, setShowControllerKey] = useState(false);
   const [showWalletKeys, setShowWalletKeys] = useState({});
+  
+  // NEW: CEO Governance State
+  const [affiliateRate, setAffiliateRate] = useState(20);
+  const [marketingRate, setMarketingRate] = useState(10);
+  
+  // NEW: Ledger State
+  const [ledger, setLedger] = useState([]);
+
+  // Business Stats State
+  const [stats, setStats] = useState({
+    price: 497,
+    students: 1247,
+    revenue: 619759
+  });
 
   // Initialize with controller account
   useEffect(() => {
@@ -50,7 +64,15 @@ export default function App() {
     };
     setController(controllerAccount);
     setBalances({ '#132': 10000 });
+    addToLedger("SYSTEM: Convex Network Connection Established.");
+    addToLedger("SYSTEM: Controller Account #132 Loaded.");
   }, []);
+
+  // Helper: Add to Ledger
+  const addToLedger = (message) => {
+    const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+    setLedger(prev => [`[${time}] ${message}`, ...prev].slice(0, 50));
+  };
 
   // Generate a random hex private key
   const generatePrivateKey = () => {
@@ -63,6 +85,7 @@ export default function App() {
   const generateWallets = async () => {
     setLoading(true);
     setStatus('Generating 4 new student wallet accounts...');
+    addToLedger("SYSTEM: Initializing Autonomous Wallet Deployment...");
     
     const walletNames = [
       'Student Enrollment Wallet',
@@ -89,13 +112,14 @@ export default function App() {
       });
       
       setBalances(prev => ({ ...prev, [address]: 0 }));
-      // THIS SETS THEM TO HIDDEN BY DEFAULT
       newVisibility[address] = false;
+      addToLedger(`DEPLOY: Created ${walletNames[i]} (${address})`);
     }
     
     setWallets(newWallets);
     setShowWalletKeys(newVisibility);
     setStatus('✓ Successfully created 4 managed wallet accounts for course operations');
+    addToLedger("SYSTEM: Network Deployment Complete. 4 Agents Active.");
     setLoading(false);
   };
 
@@ -127,6 +151,7 @@ export default function App() {
     }));
 
     setStatus(`✓ Transferred ${amount} Gold from ${selectedWallet} to ${transferTo}`);
+    addToLedger(`MANUAL_TX: Transferred ${amount}G from ${selectedWallet} to ${transferTo}`);
     setTransferAmount('');
   };
 
@@ -143,6 +168,57 @@ export default function App() {
       [address]: (prev[address] || 0) + amount
     }));
     setStatus(`✓ Funded ${address} with ${amount} Gold from controller`);
+    addToLedger(`FUNDING: Controller injected ${amount}G capital into ${address}`);
+  };
+
+  // --- Simulate Sale Logic (Updated with Governance) ---
+  const simulateSale = async () => {
+    if (wallets.length === 0) {
+      setStatus('⚠ Please deploy the wallets first!');
+      return;
+    }
+
+    const revenueWallet = wallets.find(w => w.name === 'Course Revenue Wallet');
+    const affiliateWallet = wallets.find(w => w.name === 'Affiliate Payout Wallet');
+    const marketingWallet = wallets.find(w => w.name === 'Marketing Campaign Wallet');
+
+    if (!revenueWallet) return;
+
+    // 1. Process Sale (Immediate)
+    setStats(prev => ({
+      ...prev,
+      students: prev.students + 1,
+      revenue: prev.revenue + prev.price
+    }));
+
+    setBalances(prev => ({
+      ...prev,
+      [revenueWallet.address]: (prev[revenueWallet.address] || 0) + stats.price
+    }));
+
+    setStatus('💰 New Student Enrolled! +497 Gold received. Agent analyzing splits...');
+    addToLedger(`EVENT: New Student Enrollment Detected (+${stats.price} Gold)`);
+    addToLedger(`AGENT: Detecting revenue in ${revenueWallet.address}...`);
+
+    // 2. Agentic Reaction (Delayed)
+    setTimeout(() => {
+      addToLedger(`GOVERNANCE: Applying active rules (Affiliate: ${affiliateRate}%, Marketing: ${marketingRate}%)`);
+      
+      const affiliateCut = Math.floor(stats.price * (affiliateRate / 100)); 
+      const marketingCut = Math.floor(stats.price * (marketingRate / 100)); 
+      
+      setBalances(prev => ({
+        ...prev,
+        [revenueWallet.address]: (prev[revenueWallet.address] || 0) - affiliateCut - marketingCut,
+        [affiliateWallet.address]: (prev[affiliateWallet.address] || 0) + affiliateCut,
+        [marketingWallet.address]: (prev[marketingWallet.address] || 0) + marketingCut,
+      }));
+
+      setStatus(`🤖 AUTO-AGENT: Distributed ${affiliateCut}G to Affiliate & ${marketingCut}G to Marketing.`);
+      addToLedger(`TX: Smart Contract sent ${affiliateCut}G to Affiliate Wallet (${affiliateWallet.address})`);
+      addToLedger(`TX: Smart Contract sent ${marketingCut}G to Marketing Wallet (${marketingWallet.address})`);
+      addToLedger(`SUCCESS: Transaction settled on Convex Network.`);
+    }, 1500);
   };
 
   const walletDescriptions = {
@@ -203,22 +279,22 @@ export default function App() {
             <InstructionStep 
               number="1"
               title="Generate Operations"
-              description="Click the big button to deploy 4 autonomous wallets. Each represents a distinct business function (Marketing, Revenue, etc.) controlled by AI logic."
+              description="Click 'Deploy Course Economy' to spin up the autonomous wallets. This simulates launching your business infrastructure on the Convex network."
             />
             <InstructionStep 
               number="2"
-              title="Fund the Business"
-              description="Use your 'Master Controller' account (representing the CEO or Main Agent) to inject capital. Click 'Fund 500 Gold' on any wallet."
+              title="Configure Governance"
+              description="Use the 'CEO Mode' sliders to set your Affiliate and Marketing percentages. The AI Agent reads these rules in real-time."
             />
             <InstructionStep 
               number="3"
-              title="Execute Transactions"
-              description="Use the Transfer Tool at the bottom to simulate real business activity. Move profit from 'Revenue' to 'Affiliate Payouts' or reimburse 'Marketing'."
+              title="Simulate Sales"
+              description="Click 'Simulate Sale' to have a student buy the course. Watch the 'Live Smart Contract Ledger' to see the agent automatically split the revenue."
             />
             <InstructionStep 
               number="4"
               title="Audit Security"
-              description="Click the 'Show/Hide' eye icons to inspect the cryptographic private keys. In a real Agentic Economy, these keys are held securely by the AI agent."
+              description="Inspect the cryptographic keys. Notice how the agent operates independently, executing transactions without manual approval."
             />
           </div>
         </div>
@@ -226,20 +302,54 @@ export default function App() {
 
       {/* --- MAIN SIMULATION DASHBOARD --- */}
       <div id="demo-section" className="max-w-6xl mx-auto px-6 pb-20">
-        <div className="flex items-center gap-2 mb-6">
-          <div className="h-1 w-12 bg-blue-600 rounded-full"></div>
-          <h2 className="text-sm font-bold tracking-widest text-gray-500 uppercase">Live Dashboard</h2>
-        </div>
-
+        
         {/* Dashboard Header */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-6">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="bg-gradient-to-br from-blue-600 to-purple-600 p-3 rounded-xl shadow-lg shadow-blue-200">
-              <BookOpen className="w-8 h-8 text-white" />
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+            <div className="flex items-center gap-4">
+              <div className="bg-gradient-to-br from-blue-600 to-purple-600 p-3 rounded-xl shadow-lg shadow-blue-200">
+                <BookOpen className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Digital Course Platform</h1>
+                <p className="text-gray-500 font-medium">Wallet Management System</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Digital Course Platform</h1>
-              <p className="text-gray-500 font-medium">Wallet Management System</p>
+
+            {/* CEO Mode / Governance Panel */}
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col gap-3 min-w-[300px]">
+              <div className="flex items-center gap-2 mb-1">
+                <Sliders className="w-4 h-4 text-slate-600" />
+                <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">CEO Governance Mode</h3>
+              </div>
+              
+              <div>
+                 <div className="flex justify-between text-xs font-medium text-slate-600 mb-1">
+                   <span>Affiliate Commission</span>
+                   <span className="text-blue-600">{affiliateRate}%</span>
+                 </div>
+                 <input 
+                   type="range" 
+                   min="0" max="50" 
+                   value={affiliateRate} 
+                   onChange={(e) => setAffiliateRate(Number(e.target.value))}
+                   className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                 />
+              </div>
+
+              <div>
+                 <div className="flex justify-between text-xs font-medium text-slate-600 mb-1">
+                   <span>Marketing Budget</span>
+                   <span className="text-purple-600">{marketingRate}%</span>
+                 </div>
+                 <input 
+                   type="range" 
+                   min="0" max="50" 
+                   value={marketingRate} 
+                   onChange={(e) => setMarketingRate(Number(e.target.value))}
+                   className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                 />
+              </div>
             </div>
           </div>
           
@@ -247,7 +357,7 @@ export default function App() {
             <FeatureCard 
               icon={TrendingDown}
               title="Course Price"
-              value="497 Gold"
+              value={`${stats.price} Gold`}
               colorClass="text-green-600"
               bgClass="bg-green-50"
               borderClass="border-green-100"
@@ -255,7 +365,7 @@ export default function App() {
             <FeatureCard 
               icon={Users}
               title="Students Enrolled"
-              value="1,247"
+              value={stats.students.toLocaleString()}
               colorClass="text-blue-600"
               bgClass="bg-blue-50"
               borderClass="border-blue-100"
@@ -263,7 +373,7 @@ export default function App() {
             <FeatureCard 
               icon={Wallet}
               title="Total Revenue"
-              value="619,759 Gold"
+              value={`${stats.revenue.toLocaleString()} Gold`}
               colorClass="text-purple-600"
               bgClass="bg-purple-50"
               borderClass="border-purple-100"
@@ -271,87 +381,91 @@ export default function App() {
           </div>
         </div>
 
-        {/* Controller Account */}
-        {controller && (
-          <div className="bg-slate-900 rounded-2xl shadow-xl p-6 mb-6 text-white border border-slate-700">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-500/20 rounded-lg">
-                  <Key className="w-6 h-6 text-indigo-400" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold">Master Controller Account</h2>
-                  <p className="text-slate-400 text-sm">Root Permissions • Account #132</p>
-                </div>
-              </div>
-              <Lock className="w-6 h-6 text-slate-600" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-800/50 rounded-xl p-5 border border-slate-700/50">
-              <div>
-                <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Public Address</p>
-                <p className="font-mono font-bold text-lg text-indigo-300">{controller.address}</p>
-              </div>
-              <div>
-                <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Available Balance</p>
-                <p className="font-bold text-3xl">{balances['#132'] || 0} <span className="text-lg text-slate-500 font-normal">Gold</span></p>
-              </div>
-              <div className="md:col-span-2 pt-2 border-t border-slate-700/50 mt-2">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Private Key</p>
-                  <button
-                    onClick={() => setShowControllerKey(!showControllerKey)}
-                    className="text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1 text-xs font-medium"
-                  >
-                    {showControllerKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    {showControllerKey ? 'Hide Secret' : 'Reveal Secret'}
-                  </button>
-                </div>
-                {showControllerKey ? (
-                  <p className="font-mono text-xs break-all bg-black/30 p-3 rounded border border-indigo-500/30 text-indigo-200">
-                    {controller.privateKey}
-                  </p>
+        {/* Action Bar: Generate & Simulate Sale */}
+        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-8 mb-6">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Deploy Button */}
+              <button
+                onClick={generateWallets}
+                disabled={loading || wallets.length > 0}
+                className={`
+                  w-full font-bold py-4 px-8 rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg
+                  ${wallets.length > 0 
+                    ? 'bg-green-100 text-green-700 cursor-default shadow-none border border-green-200' 
+                    : 'bg-blue-600 hover:bg-blue-700 text-white hover:scale-[1.02] shadow-blue-200'
+                  }
+                `}
+              >
+                {wallets.length > 0 ? (
+                  <>
+                    <CheckCircle className="w-6 h-6" />
+                    1. Network Deployed
+                  </>
                 ) : (
-                  <div className="font-mono text-xs bg-black/30 p-3 rounded border border-slate-700 text-slate-500 flex items-center gap-2">
-                    <Lock className="w-3 h-3" /> Encrypted private key hidden for security
-                  </div>
+                  <>
+                    <Activity className="w-6 h-6" />
+                    1. Deploy Course Economy
+                  </>
                 )}
-              </div>
-            </div>
-          </div>
-        )}
+              </button>
 
-        {/* Generate Wallets Button */}
-        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-8 mb-6 text-center">
-          <button
-            onClick={generateWallets}
-            disabled={loading || wallets.length > 0}
-            className={`
-              w-full md:w-auto min-w-[300px] font-bold py-4 px-8 rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg
-              ${wallets.length > 0 
-                ? 'bg-green-100 text-green-700 cursor-default shadow-none border border-green-200' 
-                : 'bg-blue-600 hover:bg-blue-700 text-white hover:scale-[1.02] shadow-blue-200'
-              }
-            `}
-          >
-            {wallets.length > 0 ? (
-              <>
-                <CheckCircle className="w-6 h-6" />
-                Network Deployed Successfully
-              </>
-            ) : (
-              <>
-                <Activity className="w-6 h-6" />
-                Deploy Course Economy (Create 4 Wallets)
-              </>
-            )}
-          </button>
-          {status && (
-            <div className={`mt-4 inline-block px-4 py-2 rounded-full text-sm font-medium ${
-              status.includes('✓') ? 'bg-green-100 text-green-800' : 'bg-blue-50 text-blue-800'
-            }`}>
-              {status}
+              {/* Simulate Sale Button */}
+              <button
+                onClick={simulateSale}
+                disabled={wallets.length === 0}
+                className={`
+                  w-full font-bold py-4 px-8 rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg
+                  ${wallets.length === 0 
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                    : 'bg-emerald-600 hover:bg-emerald-700 text-white hover:scale-[1.02] shadow-emerald-200'
+                  }
+                `}
+              >
+                <ShoppingCart className="w-6 h-6" />
+                2. Simulate Student Sale (+497G)
+              </button>
+           </div>
+
+           {status && (
+            <div className={`mt-6 text-center`}>
+               <div className={`inline-block px-6 py-3 rounded-full text-sm font-bold flex items-center justify-center gap-2 ${
+                  status.includes('AUTO-AGENT') ? 'bg-purple-100 text-purple-800 border border-purple-200' :
+                  status.includes('✓') || status.includes('💰') ? 'bg-green-100 text-green-800 border border-green-200' : 
+                  'bg-blue-50 text-blue-800 border border-blue-200'
+               }`}>
+                 {status.includes('AUTO-AGENT') && <Zap className="w-4 h-4" />}
+                 {status}
+               </div>
             </div>
           )}
+        </div>
+
+        {/* Live Ledger (Terminal) */}
+        <div className="bg-slate-900 rounded-xl shadow-lg border border-slate-700 p-4 mb-6 font-mono text-sm overflow-hidden">
+          <div className="flex items-center gap-2 mb-3 border-b border-slate-700 pb-2">
+            <Terminal className="w-4 h-4 text-green-400" />
+            <span className="text-slate-300 font-bold">Live Smart Contract Ledger</span>
+            <div className="ml-auto flex gap-1.5">
+               <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+               <div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+               <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+            </div>
+          </div>
+          <div className="h-48 overflow-y-auto space-y-1 pr-2 custom-scrollbar flex flex-col-reverse">
+             {ledger.length === 0 && <p className="text-slate-600 italic">Waiting for network events...</p>}
+             {ledger.map((log, i) => (
+               <div key={i} className="text-slate-300 hover:bg-slate-800/50 px-1 rounded">
+                 <span className="text-slate-500 mr-2">{log.split(']')[0]}]</span>
+                 <span className={
+                   log.includes('EVENT') ? 'text-blue-400 font-bold' :
+                   log.includes('TX') ? 'text-green-400' :
+                   log.includes('AGENT') ? 'text-purple-400' :
+                   log.includes('GOVERNANCE') ? 'text-yellow-400' :
+                   'text-slate-300'
+                 }>{log.split(']')[1]}</span>
+               </div>
+             ))}
+          </div>
         </div>
 
         {/* Wallet Accounts Grid */}
@@ -415,71 +529,6 @@ export default function App() {
                 </button>
               </div>
             ))}
-          </div>
-        )}
-
-        {/* Transfer Section */}
-        {wallets.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-            <div className="flex items-center gap-3 mb-8 border-b border-gray-100 pb-4">
-              <div className="bg-indigo-100 p-2 rounded-lg">
-                <Send className="w-6 h-6 text-indigo-600" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Execute Transfer</h2>
-                <p className="text-sm text-gray-500">Move funds between autonomous agents</p>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">From Account</label>
-                <select
-                  value={selectedWallet}
-                  onChange={(e) => setSelectedWallet(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
-                >
-                  <option value="">Select wallet...</option>
-                  <option value="#132">Controller (#132)</option>
-                  {wallets.map(w => (
-                    <option key={w.address} value={w.address}>{w.name}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">To Account</label>
-                <select
-                  value={transferTo}
-                  onChange={(e) => setTransferTo(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
-                >
-                  <option value="">Select wallet...</option>
-                  <option value="#132">Controller (#132)</option>
-                  {wallets.map(w => (
-                    <option key={w.address} value={w.address}>{w.name}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Amount (Gold)</label>
-                <input
-                  type="number"
-                  value={transferAmount}
-                  onChange={(e) => setTransferAmount(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
-                  placeholder="0.00"
-                />
-              </div>
-            </div>
-            
-            <button
-              onClick={handleTransfer}
-              className="w-full mt-6 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-bold py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200"
-            >
-              Confirm Transaction
-            </button>
           </div>
         )}
         
