@@ -440,6 +440,71 @@ export default function App() {
           )}
         </div>
 
+        {/* --- MANUAL TRANSFER SECTION (Restored) --- */}
+        {wallets.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-6">
+            <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+              <div className="bg-indigo-100 p-2 rounded-lg">
+                <Send className="w-6 h-6 text-indigo-600" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Manual Transaction Override</h2>
+                <p className="text-sm text-gray-500">Manually route funds between autonomous agents</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">From Account</label>
+                <select
+                  value={selectedWallet}
+                  onChange={(e) => setSelectedWallet(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+                >
+                  <option value="">Select wallet...</option>
+                  <option value="#132">Controller (#132)</option>
+                  {wallets.map(w => (
+                    <option key={w.address} value={w.address}>{w.name}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">To Account</label>
+                <select
+                  value={transferTo}
+                  onChange={(e) => setTransferTo(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+                >
+                  <option value="">Select wallet...</option>
+                  <option value="#132">Controller (#132)</option>
+                  {wallets.map(w => (
+                    <option key={w.address} value={w.address}>{w.name}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Amount (Gold)</label>
+                <input
+                  type="number"
+                  value={transferAmount}
+                  onChange={(e) => setTransferAmount(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+            
+            <button
+              onClick={handleTransfer}
+              className="w-full mt-6 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-bold py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200"
+            >
+              Confirm Transaction
+            </button>
+          </div>
+        )}
+
         {/* Live Ledger (Terminal) */}
         <div className="bg-slate-900 rounded-xl shadow-lg border border-slate-700 p-4 mb-6 font-mono text-sm overflow-hidden">
           <div className="flex items-center gap-2 mb-3 border-b border-slate-700 pb-2">
@@ -540,3 +605,5 @@ export default function App() {
     </div>
   );
 };
+
+
